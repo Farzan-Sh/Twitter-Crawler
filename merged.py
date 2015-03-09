@@ -60,9 +60,11 @@ def specify_user():
         if user not in added_list:
             added_list.append(user)
             print 'user added'
-        following.remove(following[0])
-
-        return user
+            following.remove(following[0])
+            return user
+        else:
+            following.remove(following[0])
+            specify_user()        
     except:
         pass
 
