@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import threading
 import sys
 import time
-
+import pickle
 #---------- global vars
 tokenfile = open('token.txt','r')
 value = tokenfile.read()
@@ -20,6 +20,20 @@ sources_for_user_extract = []
 mainpage_sources_with_user = []
 G = {}
 Compiled_Users = []
+Should_Terminate = False
+
+R = {}
+try:
+    R = pickle.load( open( "prev_data.p", "rb" ) )
+    followings = R['followings']
+    lvl1_passed_users = R['lvl1_passed_users']
+    sources_for_user_extract = R['sources_for_user_extract']
+    mainpage_sources_with_user = R['mainpage_sources_with_user']
+    Compiled_Users = R['Compiled_Users']
+    G = R['G']
+except:
+    pass
+
 #---------- main functions
 def add_user_page_source(user):
     global value
@@ -73,8 +87,8 @@ def search_keyword(mainpage_sources_with_user) :
             whole_text += '    '
         for i in keywords :
             counter += whole_text.count(i)
-        except:
-            pass
+    except:
+        pass
     Compiled_Users.append( (user , counter) )
     return
     
@@ -90,7 +104,45 @@ def specify_items(List):
     except:
         pass
     
+def save_Result():
+    R = {}
+    R['Compiled_Users'] = Compiled_Users
+    R['followings'] = followings
+    R['lvl1_passed_users'] = lvl1_passed_users
+    R['sources_for_user_extract'] = sources_for_user_extract
+    R['mainpage_sources_with_user'] = mainpage_sources_with_user
+    R['G'] = G
+    pickle.dump( R, open( "prev_data.p", "wb" ) )
 
+def Start():
+    global Should_Terminate
+    Should_Terminate = False
+    pThread = pause_Thread()
+    pThread.start()
+
+    lvl1Thread_1 = lvl1_Thread()
+    lvl1Thread_2 = lvl1_Thread()
+    lvl1Thread_1.start()
+    lvl1Thread_2.start()
+
+    lvl2Thread_1 = lvl2_Thread()
+    lvl2Thread_2 = lvl2_Thread()
+    lvl2Thread_1.start()
+    lvl2Thread_2.start()
+
+    lvl3Thread_1 = lvl3_Thread()
+    lvl3Thread_2 = lvl3_Thread()
+    lvl3Thread_1.start()
+    lvl3Thread_2.start()
+
+    lvl4Thread_1 = lvl4_Thread()
+    lvl4Thread_2 = lvl4_Thread()
+    lvl4Thread_3 = lvl4_Thread()
+    lvl4Thread_4 = lvl4_Thread()
+    lvl4Thread_1.start()
+    lvl4Thread_2.start()
+    lvl4Thread_3.start()
+    lvl4Thread_4.start()
 #---------- threads
 class pause_Thread (threading.Thread):
     def __init__(self):
@@ -98,11 +150,13 @@ class pause_Thread (threading.Thread):
         threading.Thread.__init__(self)
     def run(self):
         global Compiled_Users
-        while 1:
+        global Should_Terminate
+        while not Should_Terminate:
             if sys.stdin.read(1) == 'p':
                 print time.time() - self.t
                 print Compiled_Users
-                
+                save_Result()
+                Should_Terminate = True
 
 class lvl1_Thread (threading.Thread):
     def __init__(self):
@@ -110,7 +164,7 @@ class lvl1_Thread (threading.Thread):
         self.item = ''
     def run(self):
         global followings
-        while True:
+        while not Should_Terminate:
             if ( len(followings) != 0 ):
                 self.do_it()
     def do_it(self):
@@ -124,7 +178,7 @@ class lvl2_Thread (threading.Thread):
         self.item = ''
     def run(self):
         global sources_for_user_extract
-        while True:
+        while not Should_Terminate:
             if ( len(sources_for_user_extract) != 0 ):
                 self.do_it()
     def do_it(self):
@@ -138,7 +192,7 @@ class lvl3_Thread (threading.Thread):
         self.item = ''
     def run(self):
         global lvl1_passed_users
-        while True:
+        while not Should_Terminate:
             if ( len(lvl1_passed_users) != 0 ):
                 self.do_it()
     def do_it(self):
@@ -152,7 +206,7 @@ class lvl4_Thread (threading.Thread):
         self.item = ''
     def run(self):
         global mainpage_sources_with_user
-        while True:
+        while not Should_Terminate:
             if ( len(mainpage_sources_with_user) != 0 ):
                 self.do_it()
     def do_it(self):
@@ -162,32 +216,7 @@ class lvl4_Thread (threading.Thread):
 
 #--------- main
 
-pThread = pause_Thread()
-pThread.start()
-
-lvl1Thread_1 = lvl1_Thread()
-lvl1Thread_2 = lvl1_Thread()
-lvl1Thread_1.start()
-lvl1Thread_2.start()
-
-lvl2Thread_1 = lvl2_Thread()
-lvl2Thread_2 = lvl2_Thread()
-lvl2Thread_1.start()
-lvl2Thread_2.start()
-
-lvl3Thread_1 = lvl3_Thread()
-lvl3Thread_2 = lvl3_Thread()
-lvl3Thread_1.start()
-lvl3Thread_2.start()
-
-lvl4Thread_1 = lvl4_Thread()
-lvl4Thread_2 = lvl4_Thread()
-lvl4Thread_3 = lvl4_Thread()
-lvl4Thread_4 = lvl4_Thread()
-lvl4Thread_1.start()
-lvl4Thread_2.start()
-lvl4Thread_3.start()
-lvl4Thread_4.start()
+Start()
 
 
 
