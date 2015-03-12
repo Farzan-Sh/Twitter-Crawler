@@ -73,22 +73,16 @@ def add_user_mainpage_source(user):
 def search_keyword(mainpage_sources_with_user) :
     counter = 0
     global keywords
-    whole_text = ''
-    try:
-        user = mainpage_sources_with_user[0]
-        soup = BeautifulSoup(mainpage_sources_with_user[1])    
-        for i in soup.find_all('p' , class_='ProfileTweet-text js-tweet-text u-dir') :
-            text = str(i.next.encode('ascii' , 'ignore'))
-            try :
-                text += str(i.find('span' , class_='js-display-url').string)
-            except :
-                pass
-            whole_text += text
-            whole_text += '    '
-        for i in keywords :
-            counter += whole_text.count(i)
-    except:
-        pass
+    comments = ''
+    user = mainpage_sources_with_user[0]
+    soup = BeautifulSoup(mainpage_sources_with_user[1])
+    target_search = soup.find_all('p' , class_='ProfileTweet-text js-tweet-text u-dir')
+    for comment in target_search :
+        for string in comment.strings :
+            comments += str(string.encode('ascii' , 'ignore'))
+        comments += '   '
+    for key in key_list :
+        counter += comments.count(key)
     Compiled_Users.append( (user , counter) )
     return
     
