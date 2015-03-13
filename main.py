@@ -13,7 +13,7 @@ tokenfile = open('token.txt','r')
 value = tokenfile.read()
 tokenfile.close()
 keywordsfile = open('keywords.txt','r')
-keywords = keywordsfile.read().split()
+keywords = keywordsfile.read().lower().split(',')
 keywordsfile.close()
 followings = ['Sh_Farzan']
 lvl1_passed_users = []
@@ -23,6 +23,7 @@ G = {}
 Compiled_Users = []
 Should_Terminate = False
 threads = []
+still_search = True
 
 R = {}
 try:
@@ -75,19 +76,24 @@ def add_user_mainpage_source(user):
 def search_keyword(mainpage_sources_with_user) :
     counter = 0
     global keywords
-    comments = ''
-    user = mainpage_sources_with_user[0]
-    soup = BeautifulSoup(mainpage_sources_with_user[1])
-    target_search = soup.find_all('p' , class_='ProfileTweet-text js-tweet-text u-dir')
-    for comment in target_search :
-        for string in comment.strings :
-            comments += str(string.encode('ascii' , 'ignore'))
-        comments += '   '
-    for key in key_list :
-        counter += comments.count(key)
+    whole_text = ''
+    try:
+        user = mainpage_sources_with_user[0]
+        soup = BeautifulSoup(mainpage_sources_with_user[1])    
+        for i in soup.find_all('p' , class_='ProfileTweet-text js-tweet-text u-dir') :
+            text = str(i.next.encode('ascii' , 'ignore'))
+            try :
+                text += str(i.find('span' , class_='js-display-url').string)
+            except :
+                pass
+            whole_text += text
+            whole_text += '    '
+        for i in keywords :
+            counter += whole_text.count(i)
+    except:
+        pass
     Compiled_Users.append( (user , counter) )
     return
-    
 
 def specify_items(List):
     try:
@@ -132,23 +138,27 @@ def Start():
 
     lvl3Thread_1 = lvl3_Thread()
     lvl3Thread_2 = lvl3_Thread()
+    lvl3Thread_3 = lvl3_Thread()
+    lvl3Thread_4 = lvl3_Thread()
     threads.append(lvl3Thread_1)
     threads.append(lvl3Thread_2)
+    threads.append(lvl3Thread_3)
+    threads.append(lvl3Thread_4)
     lvl3Thread_1.start()
     lvl3Thread_2.start()
+    lvl3Thread_3.start()
+    lvl3Thread_4.start()
 
     lvl4Thread_1 = lvl4_Thread()
     lvl4Thread_2 = lvl4_Thread()
     lvl4Thread_3 = lvl4_Thread()
-    lvl4Thread_4 = lvl4_Thread()
     threads.append(lvl4Thread_1)
     threads.append(lvl4Thread_2)
     threads.append(lvl4Thread_3)
-    threads.append(lvl4Thread_4)
     lvl4Thread_1.start()
     lvl4Thread_2.start()
     lvl4Thread_3.start()
-    lvl4Thread_4.start()
+
 
 def draw_Graph():
     vertices = []
@@ -176,11 +186,11 @@ def draw_Graph():
         for j in range( len(Compiled_Users) ):
             if i in Compiled_Users[j]:
                 if Compiled_Users[j][1] != 0:
-                    if Compiled_Users[j][1]< 10:
+                    if Compiled_Users[j][1]< 100:
                         colors.append('pink')
-                    elif Compiled_Users[j][1]>= 10 and Compiled_Users[j][1]<20:
+                    elif Compiled_Users[j][1]>= 100 and Compiled_Users[j][1]<800:
                         colors.append('purple')
-                    elif Compiled_Users[j][1]>= 20:
+                    elif Compiled_Users[j][1]>= 800:
                         colors.append('red')
                     added = True
                     break
@@ -207,19 +217,26 @@ class pause_Thread (threading.Thread):
         global Should_Terminate
         while not Should_Terminate:
             if sys.stdin.read(1) == 'p':
-                print time.time() - self.t, 'secs passed... \n please wait some seconds to make the graph for you...'
+                print time.time() - self.t, 'secs passed... \n please wait some seconds to make the graph ready for you...'
                 #print Compiled_Users
-                save_Result()
+                try:
+                    save_Result()
+                except:
+                    pass
                 Should_Terminate = True
-
+        
+        
 class lvl1_Thread (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.item = ''
     def run(self):
         global followings
+        global still_search
         while not Should_Terminate:
-            if ( len(followings) != 0 ):
+            if ( len(followings) != 0 and still_search):
+                if len(followings) > 300:
+                    still_search = False
                 try:
                     self.do_it()
                 except:
@@ -288,16 +305,4 @@ for t in threads:
     t.join()
 
 draw_Graph()
-
-
-
-
-
-
-
-
-        
-
-
-
 
