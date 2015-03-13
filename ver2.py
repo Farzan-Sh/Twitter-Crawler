@@ -7,6 +7,7 @@ import threading
 import sys
 import time
 import pickle
+from igraph import *
 #---------- global vars
 tokenfile = open('token.txt','r')
 value = tokenfile.read()
@@ -21,6 +22,7 @@ mainpage_sources_with_user = []
 G = {}
 Compiled_Users = []
 Should_Terminate = False
+threads = []
 
 R = {}
 try:
@@ -116,16 +118,22 @@ def Start():
 
     lvl1Thread_1 = lvl1_Thread()
     lvl1Thread_2 = lvl1_Thread()
+    threads.append(lvl1Thread_1)
+    threads.append(lvl1Thread_2)
     lvl1Thread_1.start()
     lvl1Thread_2.start()
 
     lvl2Thread_1 = lvl2_Thread()
     lvl2Thread_2 = lvl2_Thread()
+    threads.append(lvl2Thread_1)
+    threads.append(lvl2Thread_2)
     lvl2Thread_1.start()
     lvl2Thread_2.start()
 
     lvl3Thread_1 = lvl3_Thread()
     lvl3Thread_2 = lvl3_Thread()
+    threads.append(lvl3Thread_1)
+    threads.append(lvl3Thread_2)
     lvl3Thread_1.start()
     lvl3Thread_2.start()
 
@@ -133,10 +141,62 @@ def Start():
     lvl4Thread_2 = lvl4_Thread()
     lvl4Thread_3 = lvl4_Thread()
     lvl4Thread_4 = lvl4_Thread()
+    threads.append(lvl4Thread_1)
+    threads.append(lvl4Thread_2)
+    threads.append(lvl4Thread_3)
+    threads.append(lvl4Thread_4)
     lvl4Thread_1.start()
     lvl4Thread_2.start()
     lvl4Thread_3.start()
     lvl4Thread_4.start()
+
+def draw_Graph():
+    vertices = []
+    for i in G.keys():
+        vertices.append(i)
+        for j in G[i]:
+            if j not in vertices:
+                vertices.append(j)
+
+    mvi = {}
+    counter = 1
+    for i in vertices:
+        mvi[i] = counter
+        counter += 1
+
+    edges= [(mvi[v], mvi[a]) for v in G.keys() for a in G[v]]
+    graph= Graph(edges=edges, directed=True)
+    graph.vs["label"] = vertices
+
+    colors = []
+    # age hanuz compile nashode bashe white, age shode bashe,
+    # vali filmi nabashe yellow, age bashe kam: pink motevaset:purple ziad: red 
+    for i in vertices:
+        added = False
+        for j in range( len(Compiled_Users) ):
+            if i in Compiled_Users[j]:
+                if Compiled_Users[j][1] != 0:
+                    if Compiled_Users[j][1]< 10:
+                        colors.append('pink')
+                    elif Compiled_Users[j][1]>= 10 and Compiled_Users[j][1]<20:
+                        colors.append('purple')
+                    elif Compiled_Users[j][1]>= 20:
+                        colors.append('red')
+                    added = True
+                    break
+                else:
+                    colors.append('yellow')
+                    added = True
+                    break
+            else:
+                continue
+        if not added:
+            colors.append('white')
+
+    graph.vs["color"] = colors
+    plot(graph, bbox=(1000, 1000), margin=100)
+
+
 #---------- threads
 class pause_Thread (threading.Thread):
     def __init__(self):
@@ -147,8 +207,8 @@ class pause_Thread (threading.Thread):
         global Should_Terminate
         while not Should_Terminate:
             if sys.stdin.read(1) == 'p':
-                print time.time() - self.t
-                print Compiled_Users
+                print time.time() - self.t, 'secs passed... \n please wait some seconds to make the graph for you...'
+                #print Compiled_Users
                 save_Result()
                 Should_Terminate = True
 
@@ -160,7 +220,10 @@ class lvl1_Thread (threading.Thread):
         global followings
         while not Should_Terminate:
             if ( len(followings) != 0 ):
-                self.do_it()
+                try:
+                    self.do_it()
+                except:
+                    pass
     def do_it(self):
         self.item = specify_items(followings)
         add_user_page_source(self.item)
@@ -174,7 +237,10 @@ class lvl2_Thread (threading.Thread):
         global sources_for_user_extract
         while not Should_Terminate:
             if ( len(sources_for_user_extract) != 0 ):
-                self.do_it()
+                try:
+                    self.do_it()
+                except:
+                    pass
     def do_it(self):
         self.item = specify_items(sources_for_user_extract)
         user_extract(self.item)
@@ -188,7 +254,10 @@ class lvl3_Thread (threading.Thread):
         global lvl1_passed_users
         while not Should_Terminate:
             if ( len(lvl1_passed_users) != 0 ):
-                self.do_it()
+                try:
+                    self.do_it()
+                except:
+                    pass
     def do_it(self):
         self.item = specify_items(lvl1_passed_users)
         add_user_mainpage_source(self.item)
@@ -202,7 +271,10 @@ class lvl4_Thread (threading.Thread):
         global mainpage_sources_with_user
         while not Should_Terminate:
             if ( len(mainpage_sources_with_user) != 0 ):
-                self.do_it()
+                try:
+                    self.do_it()
+                except:
+                    pass
     def do_it(self):
         self.item = specify_items(mainpage_sources_with_user)
         search_keyword(self.item)
@@ -212,7 +284,10 @@ class lvl4_Thread (threading.Thread):
 
 Start()
 
+for t in threads:
+    t.join()
 
+draw_Graph()
 
 
 
